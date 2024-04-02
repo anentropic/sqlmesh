@@ -590,13 +590,12 @@ def _raise_error(msg: str, path: Path | None = None) -> None:
 
 def _normalize_dataframe(value: t.Any) -> t.Any:
     """Normalize data in a pandas dataframe so ruamel and sqlglot can deal with it."""
-    if isinstance(value, np.ndarray):
+    if isinstance(value, (list, np.ndarray)):
         return [_normalize_dataframe(v) for v in value]
     if isinstance(value, dict):
         if "key" in value and "value" in value:
-            # Maps returned by DuckDB have the following structure: {'key': ['key1', 'key2', 'key3'], 'value': [10, 20, 30]}
-            # so we convert to {'key1': 10, 'key2': 20, 'key3': 30}
-            # TODO: handle more dialects here
+            # Maps returned by DuckDB look like: {'key': ['key1', 'key2'], 'value': [10, 20]}
+            # so we convert to {'key1': 10, 'key2': 20} (TODO: handle more dialects here)
             return {k: _normalize_dataframe(v) for k, v in zip(value["key"], value["value"])}
         return {k: _normalize_dataframe(v) for k, v in value.items()}
     return value
